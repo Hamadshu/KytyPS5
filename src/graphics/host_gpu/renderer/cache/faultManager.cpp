@@ -147,10 +147,16 @@ if (raw_count > MaxPageFaults - 1u) {
 	           raw_count, count);
 }
 		for (uint32_t index = 1; index <= count; ++index) {
-    fault_ranges.Add(faults[index], BufferCache::CACHING_PAGESIZE);
-    if (index <= 16u) {
-     LOGF("Accessed non-GPU cached memory at 0x%016" PRIx64 "\n", faults[index]);
-    }
+	const auto address = BufferCache::GuestAddress(faults[index]);
+	fault_ranges.Add(address, BufferCache::CACHING_PAGESIZE);
+	if (index <= 16u) {
+		LOGF("Accessed non-GPU cached memory at 0x%016" PRIx64 "\n", address);
+	}
+}
+if (count > 16u) {
+	LOGF_COLOR(Log::Color::BrightYellow,
+	           "FaultManager: %u more faults suppressed\n", count - 16u);
+}
 }
 if (count > 16u) {
     LOGF_COLOR(Log::Color::BrightYellow,
