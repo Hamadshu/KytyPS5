@@ -80,19 +80,19 @@ void BufferCache::ChangeRegister(BufferId id) {
 		(void)it;
 		EXIT_IF(!inserted);
 		m_total_used_memory += buffer.Size();
-		buffer.lru_id = m_lru_cache.Insert(id, m_gc_tick);
-		// Reuse the thread-local scratch buffer to avoid a heap allocation on
-// every register call. resize() only reallocates when the requested
-// size exceeds the current capacity, so steady-state calls are
-// allocation-free.
-g_tls_addresses.resize(size_pages);
-const auto base_addr = buffer.BufferDeviceAddress();
-for (uint64_t i = 0; i < size_pages; ++i) {
-	g_tls_addresses[i] = base_addr + (i << CACHING_PAGEBITS);
-}
-WriteDataBuffer(m_bda_pagetable_buffer, pages.first * sizeof(vk::DeviceAddress),
-                g_tls_addresses.data(), g_tls_addresses.size() * sizeof(vk::DeviceAddress));
-	} else {
+			buffer.lru_id = m_lru_cache.Insert(id, m_gc_tick);
+	// Reuse the thread-local scratch buffer to avoid a heap allocation on
+	// every register call. resize() only reallocates when the requested
+	// size exceeds the current capacity, so steady-state calls are
+	// allocation-free.
+	g_tls_addresses.resize(size_pages);
+	const auto base_addr = buffer.BufferDeviceAddress();
+	for (uint64_t i = 0; i < size_pages; ++i) {
+		g_tls_addresses[i] = base_addr + (i << CACHING_PAGEBITS);
+	}
+	WriteDataBuffer(m_bda_pagetable_buffer, table_offset,
+	                g_tls_addresses.data(), g_tls_addresses.size() * sizeof(vk::DeviceAddress));
+} else {
 		const auto found = m_buffers.find(buffer.CpuAddress());
 		EXIT_IF(found == m_buffers.end() || found->second != id);
 		m_buffers.erase(found);
